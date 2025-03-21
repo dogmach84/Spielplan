@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Spielplan Generator – Komplettlösung mit Excel Export</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    /* Modern, responsives Design */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #4CAF50, #81C784);
+      margin: 0;
+      color: #333;
+    }
+    header {
+      background: #388E3C;
+      padding: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 {
+      margin: 0 0 10px;
+    }
+    .config-section {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ccc;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      display: block;
+      margin: 20px auto;
+      transition: background 0.3s, transform 0.3s;
+    }
+    button:hover {
+      background: #43A047;
+      transform: translateY(-2px);
+    }
+    .availability-container, .team-pref-container {
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .avail-item, .team-field-item {
+      margin-bottom: 8px;
+    }
+    .team-field-item label {
+      font-weight: normal;
+      margin-bottom: 4px;
+    }
+    .week-header {
+      background: #AED581;
+      padding: 10px;
+      margin-top: 30px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    select.ref-dropdown {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    #exportBtn {
+      background: #2196F3;
+      margin-bottom: 20px;
+    }
+    #exportBtn:hover {
+      background: #1976D2;
+    }
+    @media (max-width: 768px) {
+      body { font-size: 15px; }
+      header h1 { font-size: 1.75rem; }
+      .container { padding: 1rem; }
+      th, td { padding: 0.75rem; }
+      button { width: 100%; box-sizing: border-box; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Spielplan Generator</h1>
+    <p>
+      5 Spiele pro Woche – jedes Team spielt 1x pro Woche.<br>
+      Teams mit definierten Spielfeld-Präferenzen sollen, wenn möglich, an dem Tag spielen, an dem ihr bevorzugtes Spielfeld verfügbar ist.<br>
+      Blockierte Tage, Schiedsrichter-Verfügbarkeiten und Team-Präferenzen werden berücksichtigt.
+    </p>
+  </header>
+  <div class="container">
+    <form id="configForm">
+      <!-- Teams -->
+      <div class="config-section">
+        <h2>Teams</h2>
+        <p>Trage pro Zeile ein Team ein (z. B. "Team 1", "Team 2", ...)</p>
+        <textarea id="teams" rows="10">Team 1
+Team 2
+Team 3
+Team 4
+Team 5
+Team 6
+Team 7
+Team 8
+Team 9
+Team 10</textarea>
+      </div>
+      <!-- Schiedsrichter -->
+      <div class="config-section">
+        <h2>Schiedsrichter</h2>
+        <p>Trage pro Zeile einen Schiedsrichter ein (z. B. "Schiri 1", "Schiri 2", ...)</p>
+        <textarea id="schiris" rows="10">Schiri 1
+Schiri 2
+Schiri 3
+Schiri 4
+Schiri 5
+Schiri 6
+Schiri 7
+Schiri 8
+Schiri 9
+Schiri 10</textarea>
+      </div>
+      <!-- Schiedsrichter Verfügbarkeit -->
+      <div class="config-section">
+        <h2>Schiedsrichter Verfügbarkeit</h2>
+        <p>Wähle für jeden Schiedsrichter die Tage aus, an denen er verfügbar ist (Standard: alle Tage verfügbar).</p>
+        <div id="refAvailContainer" class="availability-container"></div>
+        <button type="button" onclick="updateRefereeAvailability()">Verfügbarkeit aktualisieren</button>
+      </div>
+      <!-- Team Spielfeldpräferenzen -->
+      <div class="config-section">
+        <h2>Team Spielfeldpräferenzen</h2>
+        <p>Wähle für jedes Team über den Multi‑Select (Select2) die bevorzugten Spielfelder aus.<br>
+           Diese Präferenzen sollen dafür sorgen, dass das Team – wenn möglich – als Heimteam an einem Tag spielt, an dem sein bevorzugtes Spielfeld verfügbar ist.</p>
+        <div id="teamFieldPrefContainer" class="team-pref-container"></div>
+        <button type="button" onclick="updateTeamFieldPreferences()">Team-Präferenzen aktualisieren</button>
+      </div>
+      <!-- Spielfelder pro Wochentag -->
+      <div class="config-section">
+        <h2>Spielfelder pro Wochentag</h2>
+        <p>Trage die verfügbaren Spielfelder ein (kommagetrennt). Dienstag wird nicht genutzt!</p>
+        <label>Montag:</label>
+        <input type="text" id="montag" value="Spielfeld 1, Spielfeld 2">
+        <label>Mittwoch:</label>
+        <input type="text" id="mittwoch" value="Spielfeld 1, Spielfeld 3">
+        <label>Donnerstag:</label>
+        <input type="text" id="donnerstag" value="Spielfeld 4">
+        <label>Freitag:</label>
+        <input type="text" id="freitag" value="Spielfeld 1">
+      </div>
+      <!-- Startdatum -->
+      <div class="config-section">
+        <h2>Startdatum</h2>
+        <label>Startdatum (Datum des ersten Spieltags):</label>
+        <input type="date" id="startDate">
+      </div>
+      <!-- Blockierte Tage -->
+      <div class="config-section">
+        <h2>Blockierte Tage</h2>
+        <p>Wähle aus dem Kalender die Tage aus, an denen keine Spiele stattfinden sollen.</p>
+        <input type="text" id="blockedDates" placeholder="Klicke hier, um blockierte Tage auszuwählen">
+      </div>
+      <button type="button" onclick="generateSchedule()">Spielplan generieren</button>
+    </form>
+    <!-- Export to Excel Button -->
+    <button id="exportBtn" type="button" onclick="exportToExcel()">Export to Excel</button>
+    <div id="schedule"></div>
+  </div>
+  
+  <!-- jQuery (für Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <!-- SheetJS (xlsx) Bibliothek -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <script>
+    /* -------------------------------
+       Hilfsfunktionen und Initialisierungen
+       ------------------------------- */
+    
+    // Flatpickr für blockierte Tage initialisieren
+    const blockedPicker = flatpickr("#blockedDates", {
+      mode: "multiple",
+      dateFormat: "Y-m-d"
+    });
+    
+    // Erlaubte Tage für Schiedsrichter-Verfügbarkeit
+    const allowedRefDays = ["Montag", "Mittwoch", "Donnerstag", "Freitag"];
+    
+    // Formatiert ein Datum in lokaler Zeit (YYYY-MM-DD)
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Zerlegt Text in Zeilen und entfernt leere Einträge
+    function parseLines(text) {
+      return text.split('\n').map(line => line.trim()).filter(line => line !== "");
+    }
+    
+    // Aktualisiert die Schiedsrichter-Verfügbarkeit (Checkboxen)
+    function updateRefereeAvailability() {
+      const container = document.getElementById("refAvailContainer");
+      container.innerHTML = "";
+      const refs = parseLines(document.getElementById("schiris").value);
+      refs.forEach(ref => {
+        const div = document.createElement("div");
+        div.className = "avail-item";
+        const label = document.createElement("label");
+        label.textContent = ref;
+        div.appendChild(label);
+        allowedRefDays.forEach(day => {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = "avail-" + ref;
+          checkbox.value = day;
+          checkbox.checked = true;
+          div.appendChild(checkbox);
+          const dayLabel = document.createElement("span");
+          dayLabel.textContent = " " + day + " ";
+          div.appendChild(dayLabel);
+        });
+        container.appendChild(div);
+      });
+    }
+    
+    // Liest die Schiedsrichter-Verfügbarkeit aus
+    function getRefereeAvailability() {
+      const availability = {};
+      const refs = parseLines(document.getElementById("schiris").value);
+      refs.forEach(ref => {
+        availability[ref] = [];
+        const checkboxes = document.getElementsByName("avail-" + ref);
+        Array.from(checkboxes).forEach(cb => {
+          if (cb.checked) availability[ref].push(cb.value);
+        });
+      });
+      return availability;
+    }
+    
+    // Aktualisiert die Team-Spielfeldpräferenzen mithilfe von Select2 für jedes Team
+    function updateTeamFieldPreferences() {
+      const container = document.getElementById("teamFieldPrefContainer");
+      container.innerHTML = "";
+      const teams = parseLines(document.getElementById("teams").value);
+      // Sammle alle Spielfelder aus den Konfigurationen (Montag, Mittwoch, Donnerstag, Freitag)
+      const dayFields = {
+        "Montag": document.getElementById("montag").value.split(",").map(f => f.trim()).filter(f => f),
+        "Mittwoch": document.getElementById("mittwoch").value.split(",").map(f => f.trim()).filter(f => f),
+        "Donnerstag": document.getElementById("donnerstag").value.split(",").map(f => f.trim()).filter(f => f),
+        "Freitag": document.getElementById("freitag").value.split(",").map(f => f.trim()).filter(f => f)
+      };
+      let allFields = [];
+      for (const day in dayFields) {
+        allFields = allFields.concat(dayFields[day]);
+      }
+      allFields = Array.from(new Set(allFields));
+      
+      teams.forEach(team => {
+        const div = document.createElement("div");
+        div.className = "team-field-item";
+        const label = document.createElement("label");
+        label.textContent = team;
+        div.appendChild(label);
+        const select = document.createElement("select");
+        select.className = "team-field-pref";
+        select.setAttribute("multiple", "multiple");
+        // Nutze jQuery’s .data() zum Speichern des Teamnamens
+        $(select).data("team", team);
+        allFields.forEach(field => {
+          const option = document.createElement("option");
+          option.value = field;
+          option.textContent = field;
+          select.appendChild(option);
+        });
+        div.appendChild(select);
+        container.appendChild(div);
+        // Initialisiere Select2
+        $(select).select2({
+          placeholder: "Bevorzugte Spielfelder für " + team,
+          width: "100%"
+        });
+      });
+    }
+    
+    // Liest die Team-Spielfeldpräferenzen aus den Select2-Elementen
+    function getTeamFieldPreferences() {
+      let prefs = {};
+      $(".team-field-pref").each(function(){
+        let team = $(this).data("team");
+        let values = $(this).val() || [];
+        prefs[team] = values;
+      });
+      return prefs;
+    }
+    
+    // Erzeugt den klassischen Round-Robin-Plan (ungeordnete Paarungen) für Teams
+    function generateRoundRobin(teams) {
+      const n = teams.length;
+      let matches = [];
+      let teamList = teams.slice();
+      if (n % 2 !== 0) teamList.push("Freilos");
+      const totalRounds = teamList.length - 1;
+      const halfSize = teamList.length / 2;
+      for (let r = 0; r < totalRounds; r++) {
+        for (let i = 0; i < halfSize; i++) {
+          const teamA = teamList[i];
+          const teamB = teamList[teamList.length - 1 - i];
+          if (teamA !== "Freilos" && teamB !== "Freilos") {
+            matches.push({ teamA, teamB });
+          }
+        }
+        teamList.splice(1, 0, teamList.pop());
+      }
+      return matches;
+    }
+    
+    // Berechnet den Montag der Kalenderwoche, in der ein Datum liegt
+    function getMonday(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+    
+    // Entscheidet, welches Team Heim wird.
+    // Teams mit Spielfeldpräferenz werden bevorzugt als Heimteam eingesetzt.
+    function determineHomeTeam(match, homeGameCount, teamFieldPrefs) {
+      const teamA = match.teamA;
+      const teamB = match.teamB;
+      const aHasPref = teamFieldPrefs[teamA] && teamFieldPrefs[teamA].length > 0;
+      const bHasPref = teamFieldPrefs[teamB] && teamFieldPrefs[teamB].length > 0;
+      if(aHasPref && !bHasPref) {
+        return { home: teamA, away: teamB };
+      } else if(bHasPref && !aHasPref) {
+        return { home: teamB, away: teamA };
+      } else {
+        let aCount = homeGameCount[teamA] || 0;
+        let bCount = homeGameCount[teamB] || 0;
+        if(aCount < bCount) {
+          return { home: teamA, away: teamB };
+        } else if(bCount < aCount) {
+          return { home: teamB, away: teamA };
+        } else {
+          return (Math.random() < 0.5)
+                 ? { home: teamA, away: teamB }
+                 : { home: teamB, away: teamA };
+        }
+      }
+    }
+    
+    // Weist einem Spiel ein Spielfeld zu.
+    // Zuerst wird versucht, die Präferenz des Heimteams zu berücksichtigen.
+    function assignField(match, availableFields, teamFieldPrefs) {
+      let chosenField = null;
+      if (teamFieldPrefs[match.home]) {
+        for (let pref of teamFieldPrefs[match.home]) {
+          if (availableFields.includes(pref)) {
+            chosenField = pref;
+            break;
+          }
+        }
+      }
+      if (!chosenField) {
+        chosenField = availableFields[Math.floor(Math.random() * availableFields.length)];
+      }
+      return chosenField;
+    }
+    
+    // Weist einem Spiel einen Schiedsrichter zu (Konflikte vermeiden, global ausgleichen, Verfügbarkeit berücksichtigen)
+    function assignReferee(match, referees, refereeCount, gameDay) {
+      const avail = getRefereeAvailability();
+      const homeNum = match.home.split(" ")[1];
+      const awayNum = match.away.split(" ")[1];
+      const validRefs = referees.filter(ref => {
+        const refNum = ref.split(" ")[1];
+        return (refNum !== homeNum && refNum !== awayNum && avail[ref] && avail[ref].indexOf(gameDay) !== -1);
+      });
+      if (validRefs.length === 0) return "Kein Schiri verfügbar";
+      let chosen = validRefs[0];
+      let minCount = refereeCount[chosen] || 0;
+      validRefs.forEach(ref => {
+        const count = refereeCount[ref] || 0;
+        if (count < minCount) { chosen = ref; minCount = count; }
+      });
+      refereeCount[chosen] = (refereeCount[chosen] || 0) + 1;
+      return chosen;
+    }
+    
+    /* ------------------------------------------------
+       Neue Wochenplanung: Jedes Team spielt 1x pro Woche.
+       Wir planen Runden (Round-Robin, 5 Spiele pro Runde) und ordnen jede Runde einer Kalenderwoche zu.
+       Falls die Kapazität der Woche (Montag, Mittwoch, Donnerstag, Freitag; je max. 2 Spiele) nicht ausreicht,
+       wird die Runde in die nächste Woche verschoben.
+       Dabei wird zuerst versucht, die Spielfeldpräferenz des Heimteams zu berücksichtigen.
+    ------------------------------------------------ */
+    
+    function scheduleRound(roundMatches, currentWeekMonday, dayFields, blockedDates, teamFieldPrefs, referees, refereeCount) {
+      const allowedDays = ["Montag", "Mittwoch", "Donnerstag", "Freitag"];
+      let weekDates = {};
+      let capacity = {}; // pro Tag, max. 2 Spiele
+      allowedDays.forEach(day => {
+        let d = new Date(currentWeekMonday);
+        // Fehler korrigiert: statt weekMonday, verwende currentWeekMonday
+        if (day === "Montag") d.setDate(currentWeekMonday.getDate());
+        else if (day === "Mittwoch") d.setDate(currentWeekMonday.getDate() + 2);
+        else if (day === "Donnerstag") d.setDate(currentWeekMonday.getDate() + 3);
+        else if (day === "Freitag") d.setDate(currentWeekMonday.getDate() + 4);
+        let dStr = formatDate(d);
+        weekDates[day] = dStr;
+        capacity[day] = blockedDates.includes(dStr) ? 0 : 2;
+      });
+      // Gesamtkapazität prüfen
+      let totalCap = Object.values(capacity).reduce((a, b) => a + b, 0);
+      if (totalCap < roundMatches.length) return null; // Runde passt nicht in diese Woche
+      let scheduledGames = [];
+      for (let match of roundMatches) {
+        let assigned = false;
+        let homeTeam = match.home;
+        let prefs = teamFieldPrefs[homeTeam] || [];
+        for (let day of allowedDays) {
+          if (capacity[day] > 0) {
+            let available = Array.from(dayFields[day]); // Kopie
+            let prefField = prefs.find(pref => available.includes(pref));
+            if (prefField) {
+              scheduledGames.push({
+                date: weekDates[day],
+                weekday: day,
+                home: match.home,
+                away: match.away,
+                field: prefField,
+                referee: assignReferee(match, referees, refereeCount, day)
+              });
+              dayFields[day] = dayFields[day].filter(f => f !== prefField);
+              capacity[day]--;
+              assigned = true;
+              break;
+            }
+          }
+        }
+        if (!assigned) {
+          for (let day of allowedDays) {
+            if (capacity[day] > 0 && dayFields[day].length > 0) {
+              let chosenField = dayFields[day][Math.floor(Math.random() * dayFields[day].length)];
+              scheduledGames.push({
+                date: weekDates[day],
+                weekday: day,
+                home: match.home,
+                away: match.away,
+                field: chosenField,
+                referee: assignReferee(match, referees, refereeCount, day)
+              });
+              dayFields[day] = dayFields[day].filter(f => f !== chosenField);
+              capacity[day]--;
+              assigned = true;
+              break;
+            }
+          }
+        }
+        if (!assigned) {
+          console.error("Spiel konnte nicht geplant werden:", match);
+        }
+      }
+      return scheduledGames;
+    }
+    
+    // Hauptfunktion: Plant den Spielplan in Wochen, sodass jedes Team 1 Spiel pro Woche hat.
+    function generateSchedule() {
+      let weeks = [];
+      const teams = parseLines(document.getElementById("teams").value);
+      const referees = parseLines(document.getElementById("schiris").value);
+      const baseDayFields = {
+        "Montag": document.getElementById("montag").value.split(",").map(f => f.trim()).filter(f => f),
+        "Mittwoch": document.getElementById("mittwoch").value.split(",").map(f => f.trim()).filter(f => f),
+        "Donnerstag": document.getElementById("donnerstag").value.split(",").map(f => f.trim()).filter(f => f),
+        "Freitag": document.getElementById("freitag").value.split(",").map(f => f.trim()).filter(f => f)
+      };
+      const teamFieldPrefs = getTeamFieldPreferences();
+      
+      // Erzeuge Runden aus dem Round-Robin-Plan (ungeordnete Paarungen)
+      let allMatches = generateRoundRobin(teams);
+      let roundSize = teams.length / 2; // z.B. 5 Spiele bei 10 Teams
+      let rounds = [];
+      for (let r = 0; r < allMatches.length / roundSize; r++) {
+        rounds.push(allMatches.slice(r * roundSize, (r + 1) * roundSize));
+      }
+      
+      // Bestimme Home/Away für jede Runde
+      let homeGameCount = {};
+      teams.forEach(team => { homeGameCount[team] = 0; });
+      rounds = rounds.map(round => {
+        return round.map(match => {
+          let assignment = determineHomeTeam(match, homeGameCount, teamFieldPrefs);
+          homeGameCount[assignment.home] += 1;
+          return assignment;
+        });
+      });
+      
+      const startDateValue = document.getElementById("startDate").value;
+      if (!startDateValue) { alert("Bitte ein Startdatum eingeben!"); return; }
+      let currentWeekMonday = getMonday(new Date(startDateValue));
+      const blockedDates = blockedPicker.selectedDates.map(d => formatDate(d));
+      
+      let refereeCount = {};
+      referees.forEach(ref => { refereeCount[ref] = 0; });
+      
+      // Für jede Runde soll diese in genau einer Woche eingeplant werden, wobei jedes Team 1 Spiel hat.
+      rounds.forEach(round => {
+        let scheduledRound = scheduleRound(round, currentWeekMonday, JSON.parse(JSON.stringify(baseDayFields)), blockedDates, teamFieldPrefs, referees, refereeCount);
+        while (!scheduledRound) {
+          currentWeekMonday.setDate(currentWeekMonday.getDate() + 7);
+          scheduledRound = scheduleRound(round, currentWeekMonday, JSON.parse(JSON.stringify(baseDayFields)), blockedDates, teamFieldPrefs, referees, refereeCount);
+        }
+        weeks.push({ weekNumber: weeks.length + 1, games: scheduledRound });
+        currentWeekMonday.setDate(currentWeekMonday.getDate() + 7);
+      });
+      
+      // Mapping: Für jeden Tag, welche Schiedsrichter wurden bereits zugewiesen (für die Dropdowns)
+      let dayToAssigned = {};
+      weeks.forEach(week => {
+        week.games.forEach(game => {
+          if (!dayToAssigned[game.date]) dayToAssigned[game.date] = [];
+          if (game.referee !== "Kein Schiri verfügbar") {
+            dayToAssigned[game.date].push(game.referee);
+          }
+        });
+      });
+      
+      const avail = getRefereeAvailability();
+      
+      // Ausgabe: Gruppierung nach Wochen; in der Spalte "Schiedsrichter" erscheint ein Dropdown,
+      // das nur die verfügbaren Schiedsrichter enthält.
+      let html = `<h2>Spielplan</h2>`;
+      weeks.forEach(week => {
+        html += `<div class="week-header">Woche ${week.weekNumber}</div>`;
+        if (week.games.length === 0) {
+          html += `<p>Keine Spiele in dieser Woche.</p>`;
+        } else {
+          html += `<table>
+                    <thead>
+                      <tr>
+                        <th>Datum</th>
+                        <th>Wochentag</th>
+                        <th>Heimmannschaft</th>
+                        <th>Gastmannschaft</th>
+                        <th>Spielfeld</th>
+                        <th>Schiedsrichter</th>
+                      </tr>
+                    </thead>
+                    <tbody>`;
+          week.games.forEach(game => {
+            let homeNum = game.home.split(" ")[1];
+            let awayNum = game.away.split(" ")[1];
+            let assignedForDay = dayToAssigned[game.date] || [];
+            let availableOptions = referees.filter(ref => {
+              let refNum = ref.split(" ")[1];
+              let isAvailable = avail[ref] && avail[ref].includes(game.weekday);
+              let conflict = (refNum === homeNum || refNum === awayNum);
+              let alreadyAssigned = assignedForDay.includes(ref);
+              return isAvailable && !conflict && (!alreadyAssigned || ref === game.referee);
+            });
+            let dropdown = `<select class="ref-dropdown" data-date="${game.date}" data-gameid="${game.home}-${game.away}">`;
+            availableOptions.forEach(option => {
+              let selected = (option === game.referee) ? "selected" : "";
+              dropdown += `<option value="${option}" ${selected}>${option}</option>`;
+            });
+            dropdown += `</select>`;
+            html += `<tr>
+                       <td>${game.date}</td>
+                       <td>${game.weekday}</td>
+                       <td>${game.home}</td>
+                       <td>${game.away}</td>
+                       <td>${game.field}</td>
+                       <td>${dropdown}</td>
+                     </tr>`;
+          });
+          html += `</tbody></table>`;
+        }
+      });
+      document.getElementById("schedule").innerHTML = html;
+    }
+    
+    // Exportiert den generierten Spielplan in ein Excel-Dokument.
+    function exportToExcel() {
+      let tables = document.querySelectorAll("#schedule table");
+      if (tables.length === 0) {
+        alert("Bitte generiere zuerst den Spielplan.");
+        return;
+      }
+      let wb = XLSX.utils.book_new();
+      tables.forEach((table, index) => {
+        let ws = XLSX.utils.table_to_sheet(table, { raw: true });
+        ws['!cols'] = [
+          { wpx: 100 },
+          { wpx: 100 },
+          { wpx: 120 },
+          { wpx: 120 },
+          { wpx: 100 },
+          { wpx: 150 }
+        ];
+        let range = XLSX.utils.decode_range(ws['!ref']);
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          let cellAddr = XLSX.utils.encode_cell({ c: C, r: 0 });
+          if(ws[cellAddr]) {
+            ws[cellAddr].s = {
+              fill: { fgColor: { rgb: "4CAF50" } },
+              font: { color: { rgb: "FFFFFF" }, bold: true },
+              alignment: { horizontal: "center", vertical: "center" }
+            };
+          }
+        }
+        XLSX.utils.book_append_sheet(wb, ws, "Woche " + (index + 1));
+      });
+      XLSX.writeFile(wb, "Spielplan.xlsx", { bookType: "xlsx", cellStyles: true });
+    }
+  </script>
+</body>
+</html>
