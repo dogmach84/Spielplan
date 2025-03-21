@@ -3,18 +3,18 @@
 /* Google Fonts einbinden */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
-/* CSS Variablen für Farben, Schrift und Abstände */
+/* CSS-Variablen für Farben und Abstände */
 :root {
-  --primary-color: #198643;
-  --secondary-color: #1976d2;
+  --primary-color: #0d47a1;
+  --primary-dark: #1565c0;
   --accent-color: #64b5f6;
   --background-color: #f0f2f5;
   --container-bg: #ffffff;
-  --text-color: #333;
-  --border-color: #ddd;
-  --header-bg: linear-gradient(135deg, #0d47a1, #1976d2);
-  --font-family: 'Montserrat', sans-serif;
-  --base-padding: 1rem;
+  --text-color: #333333;
+  --border-color: #ccc;
+  --header-bg: #0d47a1;
+  --button-bg: #0d47a1;
+  --button-hover-bg: #1565c0;
 }
 
 /* Basis-Reset */
@@ -27,8 +27,8 @@
 }
 
 body {
-  font-family: var(--font-family);
-  background-color: var(--background-color);
+  font-family: 'Montserrat', sans-serif;
+  background: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
   font-size: 16px;
@@ -37,9 +37,9 @@ body {
 /* Header */
 header {
   background: var(--header-bg);
-  color: #fff;
-  padding: 2rem 1rem;
+  padding: 1.5rem;
   text-align: center;
+  color: #fff;
 }
 
 header h1 {
@@ -49,22 +49,17 @@ header h1 {
 
 /* Container */
 .container {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 2rem auto;
   background: var(--container-bg);
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Überschriften */
-h1, h2, h3 {
-  margin-bottom: 1rem;
-}
-
 /* Konfigurationsabschnitte */
 .config-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
 }
@@ -90,42 +85,54 @@ select {
 
 /* Buttons */
 button {
-  display: inline-block;
-  background: var(--primary-color);
+  background: var(--button-bg);
   color: #fff;
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.3s ease;
-  margin: 1rem 0;
+  font-size: 1rem;
+  margin: 0.5rem;
+  transition: background 0.3s, transform 0.3s;
 }
 
 button:hover {
-  background: var(--secondary-color);
+  background: var(--button-hover-bg);
   transform: translateY(-2px);
 }
 
-/* Availability und Team Preference Container */
-.availability-container,
-.team-pref-container {
-  background: var(--background-color);
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  margin-top: 1rem;
+/* Flexibler Button-Container */
+.btn-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.avail-item,
-.team-field-item {
-  margin-bottom: 0.75rem;
+/* Speichern/Laden/Reset Buttons (Orange-Ton) */
+#saveBtn, #loadBtn, #resetBtn {
+  background: #ff9800;
+}
+
+#saveBtn:hover, #loadBtn:hover, #resetBtn:hover {
+  background: #f57c00;
+}
+
+/* Export Button */
+#exportBtn {
+  background: #2196F3;
+  margin-bottom: 1rem;
+}
+
+#exportBtn:hover {
+  background: #1976D2;
 }
 
 /* Wochenüberschriften */
 .week-header {
   background: var(--accent-color);
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 4px;
   text-align: center;
   font-size: 1.125rem;
@@ -142,19 +149,15 @@ table {
 
 th,
 td {
-  padding: 1rem;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
   text-align: center;
 }
 
 th {
-  background: var(--primary-color);
+  background: var(--header-bg);
   color: #fff;
   font-weight: 600;
-}
-
-tr:nth-child(even) {
-  background: #f7f7f7;
 }
 
 /* Dropdown für Schiedsrichter */
@@ -164,16 +167,6 @@ select.ref-dropdown {
   border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 1rem;
-}
-
-/* Export Button */
-#exportBtn {
-  background: #2196F3;
-  margin-bottom: 20px;
-}
-
-#exportBtn:hover {
-  background: #1976D2;
 }
 
 /* Responsive Anpassungen */
@@ -188,7 +181,7 @@ select.ref-dropdown {
     padding: 1rem;
   }
   th, td {
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
   button {
     width: 100%;
