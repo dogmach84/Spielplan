@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Spielplan Generator – Komplettlösung mit File-Save/Load & Export</title>
+  <title>Spielplan Generator Boedelimeisterschaft</title>
   <link rel="stylesheet" href="style.css">
   <!-- Flatpickr CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -143,9 +143,14 @@
   <header>
     <h1>Spielplan Generator</h1>
     <p>
-      5 Spiele pro Woche – jedes Team spielt 1x pro Woche.<br>
-      Teams mit definierten Spielfeld‑Präferenzen sollen, wenn möglich, als Heimteam an dem Tag spielen, an dem ihr bevorzugtes Spielfeld verfügbar ist.<br>
-      Blockierte Tage, Schiedsrichter‑Verfügbarkeiten und Team‑Präferenzen werden berücksichtigt.
+      Teams können hinzugefügt oder entfernt werden. Teamname kann angepasst werden.<br>
+      Nur ein Team pro Zeile<br>
+      Schiedsrichter können hinzugefügt oder entfernt werden. Namen können angepasst werden.<br>
+      Verfügbarkeit der Schiedsrichter via Checkbox anklicken. Um Menü zu öffnen "Verfügbarkeit aktualisieren" klicken.<br>
+      Namen der Spielfelder können angepasst werden, sowie entfernt oder hinzugefügt werden. Mit Koma trennen.<br>
+      Spielfeldpräferenzen - Kann gewählt werden das z.b. Roriwang wenn möglich immer zuhause spielt.<br>
+      Startdatum muss ein Montag gewählt werden<br>
+      Blockierte Daten können eingetragen werden. Nur Wochentage nötig. Auch Dienstag ist nicht nötig zu blockieren da kein Spielfeld zu verfügung steht am Dienstag.
     </p>
   </header>
   <div class="container">
@@ -154,31 +159,31 @@
       <div class="config-section">
         <h2>Teams</h2>
         <p>Trage pro Zeile ein Team ein (z. B. "Team 1", "Team 2", ...)</p>
-        <textarea id="teams" rows="10">Team 1
-Team 2
-Team 3
-Team 4
-Team 5
-Team 6
-Team 7
-Team 8
-Team 9
-Team 10</textarea>
+        <textarea id="teams" rows="10">Team UNW
+Team FM
+Team BEO
+Team SCGW
+Team SCBO
+Team SCR89
+Team SCE
+Team UA
+Team SCBA
+Team GCB</textarea>
       </div>
       <!-- Schiedsrichter -->
       <div class="config-section">
         <h2>Schiedsrichter</h2>
         <p>Trage pro Zeile einen Schiedsrichter ein (z. B. "Schiri 1", "Schiri 2", ...)</p>
-        <textarea id="schiris" rows="10">Schiri 1
-Schiri 2
-Schiri 3
-Schiri 4
-Schiri 5
-Schiri 6
-Schiri 7
-Schiri 8
-Schiri 9
-Schiri 10</textarea>
+        <textarea id="schiris" rows="10">UNW
+FM
+BEO
+SCGW
+SCBO
+SCR89
+SCE
+UA
+SCBA
+GCB</textarea>
       </div>
       <!-- Schiedsrichter Verfügbarkeit -->
       <div class="config-section">
@@ -203,13 +208,13 @@ Schiri 10</textarea>
         <h2>Spielfelder pro Wochentag</h2>
         <p>Trage die verfügbaren Spielfelder ein (kommagetrennt). Dienstag wird nicht genutzt!</p>
         <label>Montag:</label>
-        <input type="text" id="montag" value="Spielfeld 1, Spielfeld 2">
+        <input type="text" id="montag" value="Gymer_Mo, BZI">
         <label>Mittwoch:</label>
-        <input type="text" id="mittwoch" value="Spielfeld 1, Spielfeld 3">
+        <input type="text" id="mittwoch" value="Gymer_Mi, General Guisan">
         <label>Donnerstag:</label>
-        <input type="text" id="donnerstag" value="Spielfeld 4">
+        <input type="text" id="donnerstag" value="Boenigen">
         <label>Freitag:</label>
-        <input type="text" id="freitag" value="Spielfeld 1">
+        <input type="text" id="freitag" value="Gymer_Fr">
       </div>
       <!-- Startdatum -->
       <div class="config-section">
